@@ -1,6 +1,3 @@
-아래는 그 내용을 반영한 영어 버전 README 소개 문구입니다. 논문은 인용한 것이며, **코드는 사용자가 구현한 것**임을 명확히 밝혔습니다:
-
----
 
 ## 🔧 MR-VNet: Media Restoration using Volterra Networks
 
