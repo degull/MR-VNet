@@ -3,7 +3,7 @@ import torch
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from PIL import Image
-from mrvnet_unet import MRVNetUNet
+from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 
 # ✅ 설정

@@ -1,6 +1,6 @@
 # mrvnet_block.py
 # VolterraLayer들을 쌓은 block (U-Net의 building block)
-from volterra_layer import VolterraLayer2D
+from mr_vnet_model.volterra_layer import VolterraLayer2D
 import torch.nn as nn
 
 class MRVNetBlock(nn.Module):

@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mrvnet_block import MRVNetBlock
+from mr_vnet_model.mrvnet_block import MRVNetBlock
 
 class MRVNetUNet(nn.Module):
     def __init__(self, in_channels=3, base_channels=32, rank=4):
