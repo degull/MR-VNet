@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import lpips
 
-from mrvnet_unet import MRVNetUNet
+from mr_vnet_model.mrvnet_unet import MRVNetUNet
 from dataset import ImageRestoreDataset
 from utils import calculate_psnr, calculate_ssim
 
