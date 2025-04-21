@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import os
 import torch
 import torchvision.transforms as transforms
@@ -7,8 +11,8 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 
 # ✅ 설정
-checkpoint_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\re_mrvnet_epoch98.pth"
-input_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\000627.png"  # 복원할 이미지 경로
+checkpoint_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid\kadid_mrvnet_epoch98.pth"
+input_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I77_03_05.png"  # 복원할 이미지 경로
 output_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\single_results\result.png"
 os.makedirs(os.path.dirname(output_image_path), exist_ok=True)
 

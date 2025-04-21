@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from mr_vnet_model.mrvnet_unet import MRVNetUNet
-from dataset_gopro_sidd import PairedImageDataset
+from GOPRO.dataset_gopro_sidd import PairedImageDataset
 from utils import calculate_psnr, calculate_ssim
 
 # ✅ 설정

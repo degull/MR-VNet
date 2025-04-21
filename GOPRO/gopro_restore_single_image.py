@@ -1,6 +1,9 @@
-
-
 # reference x
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import os
 import torch
 from PIL import Image
@@ -11,8 +14,8 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 # ✅ 설정
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-CHECKPOINT = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\gopro\mrvnet_epoch95.pth"
-DISTORTED_IMG_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\dataset\GOPRO_Large\test\GOPR0881_11_01\blur\000229.png"
+CHECKPOINT = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\gopro\gopro_mrvnet_epoch95.pth"
+DISTORTED_IMG_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I77_03_05.png"
 SAVE_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\results\single_nogt"
 os.makedirs(SAVE_DIR, exist_ok=True)
 

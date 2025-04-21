@@ -7,7 +7,7 @@ from tqdm import tqdm
 import lpips
 
 from mr_vnet_model.mrvnet_unet import MRVNetUNet
-from dataset_gopro_sidd import PairedImageDataset
+from GOPRO.dataset_gopro_sidd import PairedImageDataset
 from utils import calculate_psnr, calculate_ssim
 
 def main():
