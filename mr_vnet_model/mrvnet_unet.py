@@ -1,6 +1,5 @@
 # mrvnet_unet.py
 #  U-Net 복원 구조이며, 내부 모든 block은 Volterra 기반으로 구성되어 일반 CNN U-Net보다 더 정밀한 왜곡 복원 능력
-""" 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -54,55 +53,4 @@ class MRVNetUNet(nn.Module):
 
         # 최종 출력
         out = self.final(d1_upsampled + x1)  # skip connection with residual
-        return out
-
- """
-
-
-# 수정2
-# U-Net 구조는 동일, 내부 블록만 교체됨
-# mrvnet_unet.py
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from .mrvnet_block import MRVNetBlock
-
-class MRVNetUNet(nn.Module):
-    def __init__(self, in_channels=3, base_channels=32):
-        super().__init__()
-
-        self.enc1 = MRVNetBlock(in_channels, base_channels, num_layers=1)
-        self.enc2 = MRVNetBlock(base_channels, base_channels * 2, num_layers=1)
-        self.enc3 = MRVNetBlock(base_channels * 2, base_channels * 4, num_layers=1)
-        self.enc4 = MRVNetBlock(base_channels * 4, base_channels * 8, num_layers=1)
-
-        self.down = nn.MaxPool2d(2)
-
-        self.middle = MRVNetBlock(base_channels * 8, base_channels * 8, num_layers=1)
-
-        self.up3 = nn.ConvTranspose2d(base_channels * 8, base_channels * 4, kernel_size=2, stride=2)
-        self.dec3 = MRVNetBlock(base_channels * 8, base_channels * 4, num_layers=1)
-
-        self.up2 = nn.ConvTranspose2d(base_channels * 4, base_channels * 2, kernel_size=2, stride=2)
-        self.dec2 = MRVNetBlock(base_channels * 4, base_channels * 2, num_layers=1)
-
-        self.up1 = nn.ConvTranspose2d(base_channels * 2, base_channels, kernel_size=2, stride=2)
-        self.dec1 = MRVNetBlock(base_channels * 2, base_channels, num_layers=1)
-
-        self.final = nn.Conv2d(base_channels, in_channels, kernel_size=1)
-
-    def forward(self, x):
-        x1 = self.enc1(x)
-        x2 = self.enc2(self.down(x1))
-        x3 = self.enc3(self.down(x2))
-        x4 = self.enc4(self.down(x3))
-
-        m = self.middle(self.down(x4))
-
-        d3 = self.dec3(torch.cat([self.up3(m), x4], dim=1))
-        d2 = self.dec2(torch.cat([self.up2(d3), x3], dim=1))
-        d1 = self.dec1(torch.cat([self.up1(d2), x2], dim=1))
-
-        d1_upsampled = F.interpolate(d1, size=x1.shape[2:], mode='bilinear', align_corners=False)
-        out = self.final(d1_upsampled + x1)
         return out

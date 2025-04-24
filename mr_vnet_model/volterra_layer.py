@@ -1,6 +1,5 @@
 # volterra_layer.py
-# 수정1 -> 논문과의 차이 존재
-""" 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -72,42 +71,3 @@ class VolterraLayer2D(nn.Module):
             print("❗ 출력에 Inf 존재")
 
         return out
- """
-
-# volterra_layer.py
-# 수정2 -> 논문과 동일하도록
-# volterra_layer.py
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-def circular_shift(x, shift_h, shift_w):
-    return torch.roll(x, shifts=(shift_h, shift_w), dims=(2, 3))
-
-class VNNLayer2D(nn.Module):
-    def __init__(self, channels, shift_offsets=[(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1)]):
-        super().__init__()
-        self.channels = channels
-        self.shift_offsets = shift_offsets
-        self.linear = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
-
-        # 각 shift 조합마다 learnable weight (2차항)
-        self.weights = nn.ParameterList([
-            nn.Parameter(torch.randn(1, channels, 1, 1)) for _ in range(len(shift_offsets)**2)
-        ])
-
-    def forward(self, x):
-        linear_term = self.linear(x)
-
-        # 2차항 계산
-        quad_term = 0
-        index = 0
-        for i, (sh1_h, sh1_w) in enumerate(self.shift_offsets):
-            s1 = circular_shift(x, sh1_h, sh1_w)
-            for j, (sh2_h, sh2_w) in enumerate(self.shift_offsets):
-                s2 = circular_shift(x, sh2_h, sh2_w)
-                prod = s1 * s2
-                quad_term += self.weights[index] * prod
-                index += 1
-
-        return linear_term + quad_term

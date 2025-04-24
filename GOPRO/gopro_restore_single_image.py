@@ -15,7 +15,7 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 # ✅ 설정
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CHECKPOINT = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\gopro\gopro_mrvnet_epoch95.pth"
-DISTORTED_IMG_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I77_03_05.png"
+DISTORTED_IMG_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I79_21_05.png"
 SAVE_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\results\single_nogt"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
