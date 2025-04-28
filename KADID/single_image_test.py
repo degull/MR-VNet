@@ -2,17 +2,18 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import os
 import torch
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 from PIL import Image
+from skimage.metrics import peak_signal_noise_ratio as compare_psnr
+from skimage.metrics import structural_similarity as compare_ssim
 from mr_vnet_model.mrvnet_unet import MRVNetUNet
-
 
 # ✅ 설정
 checkpoint_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid\kadid_mrvnet_epoch98.pth"
-input_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I26_25_05.png"  # 복원할 이미지 경로
+input_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I11_19_05.png"  # 왜곡 이미지
+ref_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I11.png"  # ✅ 원본 Reference 이미지
 output_image_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\single_results\result22.png"
 os.makedirs(os.path.dirname(output_image_path), exist_ok=True)
 
@@ -30,9 +31,13 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-# ✅ 입력 이미지 로드
+# ✅ 입력 이미지 로드 (왜곡된 이미지)
 input_image = Image.open(input_image_path).convert("RGB")
 input_tensor = transform(input_image).unsqueeze(0).to(device)
+
+# ✅ Reference 이미지 로드 (깨끗한 원본)
+ref_image = Image.open(ref_image_path).convert("RGB")
+ref_tensor = transform(ref_image)
 
 # ✅ 복원 수행
 with torch.no_grad():
@@ -40,7 +45,6 @@ with torch.no_grad():
 
 # ✅ 시각화 및 저장
 def visualize_and_save(input_img, output_img, save_path):
-    import torchvision
     from torchvision.utils import make_grid
     import numpy as np
 
@@ -56,3 +60,13 @@ def visualize_and_save(input_img, output_img, save_path):
 
 visualize_and_save(input_tensor.squeeze(0).cpu(), output_tensor, output_image_path)
 print(f"✅ 복원 결과 저장 완료: {output_image_path}")
+
+# ✅ PSNR, SSIM 계산 (Reference vs 복원된 이미지)
+ref_np = ref_tensor.permute(1, 2, 0).cpu().numpy()
+output_np = output_tensor.permute(1, 2, 0).cpu().numpy()
+
+psnr_value = compare_psnr(ref_np, output_np, data_range=1.0)
+ssim_value = compare_ssim(ref_np, output_np, channel_axis=-1, data_range=1.0)
+
+print(f"✅ PSNR (Ref vs Restored): {psnr_value:.2f} dB")
+print(f"✅ SSIM (Ref vs Restored): {ssim_value:.4f}")
