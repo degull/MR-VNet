@@ -15,7 +15,7 @@ from utils import calculate_psnr, calculate_ssim
 
 # ✅ 하이퍼파라미터 설정
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 NUM_EPOCHS = 100
 LEARNING_RATE = 1e-4
 BASE_CHANNELS = 32
@@ -25,7 +25,7 @@ LPIPS_WEIGHT = 0.1  # perceptual loss 가중치
 # ✅ 경로 설정
 CSV_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\kadid10k.csv"
 IMG_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images"
-CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_volterra"
+CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_volterras"
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 # ✅ 데이터셋 로딩
