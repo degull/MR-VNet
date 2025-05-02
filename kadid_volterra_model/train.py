@@ -22,18 +22,16 @@ def main():
     CSV_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\kadid10k.csv"
     IMG_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images"
     CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_volterras"
-    PRETRAINED_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_volterras\mrvnet_epoch3.pth"
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
     # ✅ 하이퍼파라미터 설정
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     BATCH_SIZE = 2
     NUM_EPOCHS = 100
-    START_EPOCH = 4  # ⭐ 3epoch까지 학습한 weight 이어받으니까 4부터 시작
     LEARNING_RATE = 1e-5
     BASE_CHANNELS = 32
     SHIFT_RADIUS = 1
-    RANK = 4
+    RANK = 2
     LPIPS_WEIGHT = 0.1
 
     # ✅ 데이터셋 로딩
@@ -46,14 +44,8 @@ def main():
     lpips_fn = lpips.LPIPS(net='alex').to(DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    # ✅ 저장된 모델 불러오기
-    if os.path.exists(PRETRAINED_PATH):
-        checkpoint = torch.load(PRETRAINED_PATH, map_location=DEVICE)
-        model.load_state_dict(checkpoint)
-        print(f"✅ Loaded checkpoint from: {PRETRAINED_PATH}")
-
     # ✅ 학습 루프
-    for epoch in range(START_EPOCH, NUM_EPOCHS + 1):
+    for epoch in range(1, NUM_EPOCHS + 1):
         model.train()
         epoch_loss = 0.0
 

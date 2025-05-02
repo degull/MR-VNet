@@ -51,10 +51,10 @@ class VolterraLayer2D(nn.Module):
         # ✅ 2차항 (F2)
         shifted_maps = [self.circular_shift(x, shift) for shift in self.shift_offsets]
         F2 = 0
-        for i, Xi in enumerate(shifted_maps):
-            for j, Xj in enumerate(shifted_maps):
-                pairwise_product = Xi * Xj
-                for q in range(self.rank):
+        for i, Xi in enumerate(shifted_maps):               # 첫 번째 shift된 이미지
+            for j, Xj in enumerate(shifted_maps):           # 두 번째 shift된 이미지
+                pairwise_product = Xi * Xj                  # 픽셀끼리 곱하기 (비선형성 도입)
+                for q in range(self.rank):                  # Q-rank 근사 반복
                     W2a = self.projectors[f"{i}_{j}"][q][0]
                     W2b = self.projectors[f"{i}_{j}"][q][1]
                     F2 += W2b(W2a(pairwise_product))
