@@ -10,12 +10,14 @@ import torchvision.transforms as transforms
 from tqdm import tqdm
 import lpips
 
+# 🔧 환경 변수 설정 (메모리 파편화 방지)
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 # 🔥 MRVNet Model Import
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from kadid_volterra_model.mrvnet_unet import MRVNetUNet
 from dataset import ImageRestoreDataset
 from utils import calculate_psnr, calculate_ssim
-
 
 def main():
     # ✅ 경로 설정
@@ -36,7 +38,7 @@ def main():
 
     # ✅ 데이터셋 로딩
     train_dataset = ImageRestoreDataset(csv_path=CSV_PATH, img_dir=IMG_DIR)
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0, pin_memory=True)
 
     # ✅ 모델, 손실함수, 옵티마이저 정의
     model = MRVNetUNet(in_channels=3, base_channels=BASE_CHANNELS, shift_radius=SHIFT_RADIUS, rank=RANK).to(DEVICE)
@@ -44,12 +46,22 @@ def main():
     lpips_fn = lpips.LPIPS(net='alex').to(DEVICE)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+    # ✅ 체크포인트에서 로드
+    start_epoch = 4
+    checkpoint_path = os.path.join(CHECKPOINT_DIR, "mrvnet_epoch3.pth")
+    if os.path.exists(checkpoint_path):
+        print(f"✅ Resuming from checkpoint: {checkpoint_path}")
+        model.load_state_dict(torch.load(checkpoint_path, map_location=DEVICE))
+    else:
+        print(f"⚠️ Checkpoint not found: {checkpoint_path}. Starting from scratch.")
+        start_epoch = 1
+
     # ✅ 학습 루프
-    for epoch in range(1, NUM_EPOCHS + 1):
+    for epoch in range(start_epoch, NUM_EPOCHS + 1):
         model.train()
         epoch_loss = 0.0
-
         loop = tqdm(train_loader, total=len(train_loader), desc=f"[Epoch {epoch}]")
+
         for dist_img, ref_img in loop:
             dist_img = dist_img.to(DEVICE)
             ref_img = ref_img.to(DEVICE)
@@ -64,6 +76,10 @@ def main():
             lpips_loss = lpips_fn(output_lpips, ref_lpips).mean()
             loss = mse_loss + LPIPS_WEIGHT * lpips_loss
 
+            if torch.isnan(loss) or torch.isinf(loss):
+                print("❗ [Error] Loss contains NaN or Inf. Skipping batch.")
+                continue
+
             loss.backward()
             optimizer.step()
 
@@ -73,7 +89,7 @@ def main():
         avg_loss = epoch_loss / len(train_loader)
         print(f"✅ [Epoch {epoch}] Average Loss: {avg_loss:.6f}")
 
-        # ✅ Epoch 끝나고 평가
+        # ✅ 평가
         model.eval()
         with torch.no_grad():
             total_psnr = 0
@@ -98,6 +114,6 @@ def main():
         torch.save(model.state_dict(), save_path)
         print(f"✅ Checkpoint saved at {save_path}")
 
-# 🔥 진짜 중요한 부분 🔥
+# ✅ 실행
 if __name__ == "__main__":
     main()
