@@ -1,14 +1,13 @@
-# 단일 train
+
+# train/test/valid
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 import lpips
 
@@ -23,42 +22,51 @@ NUM_EPOCHS = 100
 LEARNING_RATE = 1e-4
 BASE_CHANNELS = 32
 RANK = 4
-LPIPS_WEIGHT = 0.1  # 🔥 perceptual loss 가중치
+LPIPS_WEIGHT = 0.1
 
 # ✅ 경로 설정
 CSV_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\kadid10k.csv"
 IMG_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images"
-CHECKPOINT_DIR = "./checkpoints"
+CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_split"
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-# ✅ 데이터셋 로딩
-train_dataset = ImageRestoreDataset(csv_path=CSV_PATH, img_dir=IMG_DIR)
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+# ✅ 전체 데이터셋 로딩
+full_dataset = ImageRestoreDataset(csv_path=CSV_PATH, img_dir=IMG_DIR)
 
-# ✅ 모델, 손실함수, 옵티마이저 정의
+# ✅ 데이터셋 분할 (8:1:1 = train:valid:test)
+total_len = len(full_dataset)
+train_len = int(0.8 * total_len)
+valid_len = int(0.1 * total_len)
+test_len = total_len - train_len - valid_len
+train_set, valid_set, test_set = random_split(full_dataset, [train_len, valid_len, test_len])
+
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
+valid_loader = DataLoader(valid_set, batch_size=BATCH_SIZE, shuffle=False)
+test_loader  = DataLoader(test_set,  batch_size=BATCH_SIZE, shuffle=False)
+
+# ✅ 모델 및 손실 함수 정의
 model = MRVNetUNet(in_channels=3, base_channels=BASE_CHANNELS, rank=RANK).to(DEVICE)
 mse_criterion = nn.MSELoss()
 lpips_fn = lpips.LPIPS(net='alex').to(DEVICE)
-
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 # ✅ 학습 루프
 for epoch in range(1, NUM_EPOCHS + 1):
     model.train()
     epoch_loss = 0.0
-
     loop = tqdm(train_loader, total=len(train_loader), desc=f"[Epoch {epoch}]")
+
     for dist_img, ref_img in loop:
         dist_img, ref_img = dist_img.to(DEVICE), ref_img.to(DEVICE)
 
         optimizer.zero_grad()
         output = model(dist_img)
 
-        # ✅ LPIPS 입력을 [-1, 1]로 정규화
+        # [-1, 1] 정규화 for LPIPS
         output_lpips = (output * 2) - 1
         ref_lpips = (ref_img * 2) - 1
 
-        # ✅ MSE + LPIPS 조합 손실 계산
+        # 손실 계산
         mse_loss = mse_criterion(output, ref_img)
         lpips_loss = lpips_fn(output_lpips, ref_lpips).mean()
         loss = mse_loss + LPIPS_WEIGHT * lpips_loss
@@ -70,26 +78,36 @@ for epoch in range(1, NUM_EPOCHS + 1):
         loop.set_postfix(loss=loss.item())
 
     avg_loss = epoch_loss / len(train_loader)
-    print(f"[Epoch {epoch}] Avg Loss: {avg_loss:.4f}")
+    print(f"[Epoch {epoch}] Avg Train Loss: {avg_loss:.4f}")
 
-    # ✅ 평가 지표 계산
+    # ✅ Validation
     model.eval()
     with torch.no_grad():
-        total_psnr = 0
-        total_ssim = 0
-        for dist_img, ref_img in train_loader:
+        val_psnr, val_ssim = 0, 0
+        for dist_img, ref_img in valid_loader:
             dist_img, ref_img = dist_img.to(DEVICE), ref_img.to(DEVICE)
             output = model(dist_img)
+            val_psnr += calculate_psnr(output, ref_img)
+            val_ssim += calculate_ssim(output, ref_img)
 
-            psnr = calculate_psnr(output, ref_img)
-            ssim = calculate_ssim(output, ref_img)
+        avg_val_psnr = val_psnr / len(valid_loader)
+        avg_val_ssim = val_ssim / len(valid_loader)
+        print(f"[Epoch {epoch}] Valid PSNR: {avg_val_psnr:.2f}, SSIM: {avg_val_ssim:.4f}")
 
-            total_psnr += psnr
-            total_ssim += ssim
+    # ✅ 체크포인트 저장 (지정 경로로)
+    save_path = os.path.join(CHECKPOINT_DIR, f"re_mrvnet_epoch{epoch}.pth")
+    torch.save(model.state_dict(), save_path)
 
-        avg_psnr = total_psnr / len(train_loader)
-        avg_ssim = total_ssim / len(train_loader)
-        print(f"[Epoch {epoch}] PSNR: {avg_psnr:.2f}, SSIM: {avg_ssim:.4f}")
+# ✅ 최종 테스트
+model.eval()
+with torch.no_grad():
+    test_psnr, test_ssim = 0, 0
+    for dist_img, ref_img in test_loader:
+        dist_img, ref_img = dist_img.to(DEVICE), ref_img.to(DEVICE)
+        output = model(dist_img)
+        test_psnr += calculate_psnr(output, ref_img)
+        test_ssim += calculate_ssim(output, ref_img)
 
-    # ✅ 체크포인트 저장
-    torch.save(model.state_dict(), os.path.join(CHECKPOINT_DIR, f"re_mrvnet_epoch{epoch}.pth"))
+    avg_test_psnr = test_psnr / len(test_loader)
+    avg_test_ssim = test_ssim / len(test_loader)
+    print(f"[Final Test] PSNR: {avg_test_psnr:.2f}, SSIM: {avg_test_ssim:.4f}")
