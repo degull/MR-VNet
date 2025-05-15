@@ -1,5 +1,8 @@
 # swinir_volterra.py
-# swinir_volterra.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from swinir import SwinIR as SwinIRBase
 from volterra_layer import VolterraLayer2D
 from volterra_rstb import RSTBWithVolterra

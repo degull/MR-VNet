@@ -1,5 +1,8 @@
 # volterra_rstb.py
-# volterra_rstb.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from swinir import SwinTransformerBlock, PatchEmbed, PatchUnEmbed
 from volterra_layer import VolterraLayer2D
 import torch.nn as nn
