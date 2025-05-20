@@ -71,3 +71,5 @@ class VolterraLayer2D(nn.Module):
             print("❗ 출력에 Inf 존재")
 
         return out
+    
+    

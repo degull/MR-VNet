@@ -19,8 +19,8 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 # ✅ 설정 경로
 checkpoint_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_split\re_mrvnet_epoch67.pth"
-distorted_img_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\i02_11_5.bmp"
-reference_img_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\I02.BMP"
+distorted_img_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I56_08_05.png"
+reference_img_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\KADID10K\images\I56.png"
 save_img_path = r"C:\Users\IIPL02\Desktop\MRVNet2D\single_results\compare_full.png"
 os.makedirs(os.path.dirname(save_img_path), exist_ok=True)
 
