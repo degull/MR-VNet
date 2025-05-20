@@ -27,10 +27,18 @@ class KADID10KDataset(Dataset):
         dist_path, ref_path = self.samples[idx]
         dist = pil_loader(dist_path)
         ref = pil_loader(ref_path)
+        
+        # ✅ transform이 없으면 ToTensor()라도 해주자
         if self.transform:
             dist = self.transform(dist)
             ref = self.transform(ref)
+        else:
+            to_tensor = transforms.ToTensor()
+            dist = to_tensor(dist)
+            ref = to_tensor(ref)
+        
         return dist, ref
+
 
 
 class TID2013Dataset(Dataset):
@@ -51,10 +59,18 @@ class TID2013Dataset(Dataset):
         dist_path, ref_path = self.samples[idx]
         dist = pil_loader(dist_path)
         ref = pil_loader(ref_path)
+        
+        # ✅ transform이 없으면 ToTensor()라도 해주자
         if self.transform:
             dist = self.transform(dist)
             ref = self.transform(ref)
+        else:
+            to_tensor = transforms.ToTensor()
+            dist = to_tensor(dist)
+            ref = to_tensor(ref)
+        
         return dist, ref
+
 
 
 class CSIQDataset(Dataset):
@@ -77,10 +93,18 @@ class CSIQDataset(Dataset):
         dist_path, ref_path = self.samples[idx]
         dist = pil_loader(dist_path)
         ref = pil_loader(ref_path)
+        
+        # ✅ transform이 없으면 ToTensor()라도 해주자
         if self.transform:
             dist = self.transform(dist)
             ref = self.transform(ref)
+        else:
+            to_tensor = transforms.ToTensor()
+            dist = to_tensor(dist)
+            ref = to_tensor(ref)
+        
         return dist, ref
+
 
 
 # ✅ KADID + TID2013 + CSIQ 통합

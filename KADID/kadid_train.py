@@ -18,7 +18,7 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 from dataset import ImageRestoreDataset
 from utils import calculate_psnr, calculate_ssim
 
-# ✅ 하이퍼파라미터 설정
+# ✅ 하이퍼파라미터
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 8
 NUM_EPOCHS = 100
@@ -27,13 +27,13 @@ BASE_CHANNELS = 32
 RANK = 4
 LPIPS_WEIGHT = 0.1
 
-# ✅ 경로 설정
+# ✅ 경로
 CSV_PATH = r"C:\Users\IIPL02\Desktop\MRVNet2D\dataset\KADID10K\kadid10k.csv"
 IMG_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\dataset\KADID10K\images"
-CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kkkadid"
+CHECKPOINT_DIR = r"C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\only_kadid"
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-# ✅ 고도화된 카메라 시나리오 기반 transform
+# ✅ 고급 카메라 기반 transform (train 전용)
 class CustomTrainTransform:
     def __init__(self):
         self.base = transforms.Compose([
@@ -54,22 +54,28 @@ class CustomTrainTransform:
         img = self.base(img)
         return transforms.ToTensor()(img)
 
-# ✅ 전체 데이터셋 로딩 및 분할
+# ✅ 전체 데이터셋 로딩
 full_dataset = ImageRestoreDataset(csv_path=CSV_PATH, img_dir=IMG_DIR)
+
+# ✅ 8:1:1 분할
 total_len = len(full_dataset)
 train_len = int(0.8 * total_len)
 valid_len = int(0.1 * total_len)
 test_len = total_len - train_len - valid_len
 train_set, valid_set, test_set = random_split(full_dataset, [train_len, valid_len, test_len])
 
-# ✅ train에만 transform 적용
+# ✅ transform 설정
 train_set.dataset.transform = CustomTrainTransform()
+to_tensor = transforms.ToTensor()
+valid_set.dataset.transform = to_tensor
+test_set.dataset.transform = to_tensor
 
+# ✅ DataLoader
 train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
 valid_loader = DataLoader(valid_set, batch_size=BATCH_SIZE, shuffle=False)
-test_loader  = DataLoader(test_set,  batch_size=BATCH_SIZE, shuffle=False)
+test_loader  = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
-# ✅ 모델 및 손실 함수
+# ✅ 모델 및 손실
 model = MRVNetUNet(in_channels=3, base_channels=BASE_CHANNELS, rank=RANK).to(DEVICE)
 mse_criterion = nn.MSELoss()
 lpips_fn = lpips.LPIPS(net='alex').to(DEVICE)
@@ -84,7 +90,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
     for dist_img, ref_img in loop:
         dist_img, ref_img = dist_img.to(DEVICE), ref_img.to(DEVICE)
 
-        # ✅ 입력 노이즈 추가 (센서 노이즈 시뮬레이션)
+        # ✅ 노이즈 추가
         dist_img = dist_img + 0.01 * torch.randn_like(dist_img)
         dist_img = torch.clamp(dist_img, 0.0, 1.0)
 
@@ -121,7 +127,7 @@ for epoch in range(1, NUM_EPOCHS + 1):
     # ✅ 체크포인트 저장
     torch.save(model.state_dict(), os.path.join(CHECKPOINT_DIR, f"re_mrvnet_epoch{epoch}.pth"))
 
-# ✅ TTA 함수 정의
+# ✅ TTA 함수
 def test_with_tta(model, image):
     flips = [
         lambda x: x,
@@ -135,7 +141,7 @@ def test_with_tta(model, image):
         outputs.append(f(out))
     return torch.stack(outputs).mean(dim=0)
 
-# ✅ 최종 테스트 (TTA 적용)
+# ✅ 테스트
 model.eval()
 with torch.no_grad():
     test_psnr, test_ssim = 0, 0
