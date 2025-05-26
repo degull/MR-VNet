@@ -1,3 +1,10 @@
+# Reference 이미지(ref_img)는 학습 시 정답(target)으로만 사용되고, 입력은 항상 Distorted 이미지(dist_img) 단독
+# reference 이미지는 정답(target)으로만 사용
+# model에는 distorted 이미지만 입력
+# → 이것은 복원 모델 (Restoration Model) 의 전형적인 Supervised 학습 방식입니다.
+
+ 
+
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -50,11 +57,11 @@ def main():
 
         with tqdm(total=len(train_loader), desc=f"Epoch {epoch+1}/{EPOCHS}") as pbar:
             for inputs, targets in train_loader:
-                inputs = inputs.to(DEVICE)
-                targets = targets.to(DEVICE)
+                inputs = inputs.to(DEVICE)  # ← distorted 이미지 (입력)
+                targets = targets.to(DEVICE)    # ← reference 이미지 (정답)
 
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
+                outputs = model(inputs) # ← 모델에는 inputs만 들어감
+                loss = criterion(outputs, targets)  # ← 정답과 비교 (MSELoss)
 
                 optimizer.zero_grad()
                 loss.backward()
