@@ -1,0 +1,6 @@
+/KADID -> 논문과 완벽한 일치x (간소화버전)
+        -> 성능좋음 
+        -> cross-test 필요
+
+/kadid_volterra_model -> 논문 완벽 구현
+(C:\Users\IIPL02\Desktop\MRVNet2D\checkpoints\kadid_volterras)
