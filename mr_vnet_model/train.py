@@ -4,7 +4,7 @@
 # → 이것은 복원 모델 (Restoration Model) 의 전형적인 Supervised 학습 방식입니다.
 
  
-
+# train.py
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -32,7 +32,7 @@ def main():
     # ✅ 경로
     TRAIN_CSV = r"E:\MRVNet2D\KADID10K\kadid10k.csv"
     IMAGE_ROOT = r"E:\MRVNet2D\KADID10K\images"
-    CHECKPOINT_DIR = r"E:\MRVNet2D\checkpoints\original_kadid_volterras"
+    CHECKPOINT_DIR = r"E:\MRVNet2D\checkpoints\original_volterra"
     os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
     # ✅ 데이터 로더

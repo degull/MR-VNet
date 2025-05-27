@@ -16,7 +16,7 @@ def main():
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     RANK = 4
     USE_LOSSLESS = True  # 학습 설정과 동일하게 유지
-    CHECKPOINT_PATH = r"E:\MRVNet2D\checkpoints\original_kadid_volterras\mrvnet_epoch3.pth"
+    CHECKPOINT_PATH = r"E:\MRVNet2D\checkpoints\original_kadid_volterras\mrvnet_epoch98.pth"
 
     # ✅ 테스트 데이터 경로
     TEST_CSV = r"E:\MRVNet2D\KADID10K\kadid10k.csv"
