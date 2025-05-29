@@ -15,7 +15,7 @@ from mr_vnet_model.mrvnet_block import MRVNetBlock
 from swin_transformer_volterra import RSTBBlockVolterra
 
 class MRVNetUNet(nn.Module):
-    def __init__(self, in_channels=3, base_channels=32, rank=4, use_lossless=False):
+    def __init__(self, in_channels=3, base_channels=32, rank=4, use_lossless=False, use_swin_middle=True):
         super().__init__()
 
         # Encoder
@@ -26,16 +26,30 @@ class MRVNetUNet(nn.Module):
 
         self.down = nn.MaxPool2d(2)
 
+        # swin 추가버전
         # ✅ Middle Block: SwinIR-style RSTB with Volterra
-        self.middle = RSTBBlockVolterra(
-            dim=base_channels * 8,
-            input_resolution=(16, 16),
-            num_heads=8,
-            depth=6,  # Number of STL blocks
-            rank=rank
-        )
+        if use_swin_middle:
+            self.middle = RSTBBlockVolterra(
+                dim=base_channels * 8,
+                input_resolution=(16, 16),
+                num_heads=8,
+                depth=6,
+                rank=rank
+            )
+        else:
+            self.middle = MRVNetBlock(base_channels * 8, base_channels * 8, num_layers=1, rank=rank, use_lossless=use_lossless)
 
-        # Decoder
+
+
+        # swin 사용x 버전
+        model = MRVNetUNet(
+            in_channels=3,
+            base_channels=32,
+            rank=4,
+            use_lossless=True,
+            use_swin_middle=False  # ✅ Swin 제거
+        ).to()
+
         # Decoder
         self.up3 = nn.ConvTranspose2d(base_channels * 8, base_channels * 4, kernel_size=2, stride=2)
         self.dec3 = MRVNetBlock(base_channels * 4 + base_channels * 8, base_channels * 4, num_layers=1, rank=rank, use_lossless=use_lossless)
