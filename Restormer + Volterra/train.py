@@ -1,3 +1,5 @@
+# E:\MRVNet2D\Restormer + Volterra\train.py
+#train.py
 import os
 import torch
 import torch.nn as nn
@@ -11,7 +13,7 @@ from kadid_dataset import KADID10KDataset  # 커스텀 데이터셋
 from torch.cuda.amp import autocast, GradScaler  # ✅ AMP 모듈
 
 # ✅ 학습 설정
-BATCH_SIZE = 4
+BATCH_SIZE = 2
 EPOCHS = 100
 LR = 2e-4
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -65,9 +67,8 @@ def main():
 
         print(f"Epoch [{epoch+1}/{EPOCHS}] Loss: {epoch_loss / len(train_loader):.6f}")
 
-        # 모델 저장
-        if (epoch + 1) % 5 == 0:
-            torch.save(model.state_dict(), os.path.join(SAVE_DIR, f"epoch_{epoch+1}.pth"))
+        # ✅ 모든 에포크에서 저장
+        torch.save(model.state_dict(), os.path.join(SAVE_DIR, f"epoch_{epoch+1}.pth"))
 
 if __name__ == '__main__':
     main()
