@@ -78,7 +78,7 @@ if __name__ == '__main__':
 # E:\MRVNet2D\Restormer + Volterra\train.py
 #train.py
 # Progressive Learning
-# train.py
+
 """ import os
 import torch
 import torch.nn as nn
@@ -100,7 +100,7 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # ✅ 경로 설정
 DATA_CSV = 'E:/MRVNet2D/dataset/KADID10K/kadid10k.csv'
-SAVE_DIR = 'checkpoints/restormer_volterra_kadid'
+SAVE_DIR = 'checkpoints/restormer_volterra_kadid_progr'
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ✅ Progressive Learning 스케줄 정의
