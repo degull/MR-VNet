@@ -1,6 +1,6 @@
 # E:\MRVNet2D\Restormer + Volterra\train.py
 #train.py
-import os
+""" import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -73,13 +73,13 @@ def main():
 if __name__ == '__main__':
     main()
 
-
+ """
 
 # E:\MRVNet2D\Restormer + Volterra\train.py
 #train.py
 # Progressive Learning
 
-""" 
+ 
 # E:/MRVNet2D/Restormer + Volterra/train.py
 
 import os
@@ -93,7 +93,7 @@ from torch.cuda.amp import autocast, GradScaler
 
 from restormer_volterra import RestormerVolterra
 from kadid_dataset import KADID10KDataset
-from tid2013_dataset import TID2013Dataset
+from tid_dataset import TID2013Dataset
 from csiq_dataset import CSIQDataset
 
 # ✅ 학습 설정
@@ -179,4 +179,3 @@ def main():
 if __name__ == '__main__':
     main()
 
- """

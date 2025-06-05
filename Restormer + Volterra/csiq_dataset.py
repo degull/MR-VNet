@@ -21,15 +21,28 @@ class CSIQDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
+        # 상대 경로를 OS에 맞게 변환
         distorted_rel = self.data.iloc[idx]['dis_img_path'].replace('/', os.sep)
         reference_rel = self.data.iloc[idx]['ref_img_path'].replace('/', os.sep)
+
+        # ✅ "CSIQ/" 제거 (중복 방지)
+        if distorted_rel.startswith("CSIQ" + os.sep):
+            distorted_rel = distorted_rel[len("CSIQ" + os.sep):]
+        if reference_rel.startswith("CSIQ" + os.sep):
+            reference_rel = reference_rel[len("CSIQ" + os.sep):]
 
         distorted_path = os.path.join(self.root_dir, distorted_rel)
         reference_path = os.path.join(self.root_dir, reference_rel)
 
+        # 절대 경로가 아닌 경우 root_dir와 결합
+        distorted_path = distorted_rel if os.path.isabs(distorted_rel) else os.path.normpath(os.path.join(self.root_dir, distorted_rel))
+        reference_path = reference_rel if os.path.isabs(reference_rel) else os.path.normpath(os.path.join(self.root_dir, reference_rel))
+
+        # 이미지 로딩
         distorted = Image.open(distorted_path).convert('RGB')
         reference = Image.open(reference_path).convert('RGB')
 
+        # 전처리 적용
         if self.transform:
             distorted = self.transform(distorted)
             reference = self.transform(reference)
