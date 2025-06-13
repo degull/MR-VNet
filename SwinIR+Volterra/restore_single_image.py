@@ -15,8 +15,8 @@ USE_LOSSLESS = True
 USE_SWIN_MIDDLE = True
 
 # ✅ 경로 설정
-DISTORTED_IMAGE_PATH = r"E:\MRVNet2D\KADID10K\images\I42_21_05.png"   # 입력 왜곡 이미지
-REFERENCE_IMAGE_PATH = r"E:\MRVNet2D\KADID10K\images\I42.png"        # 참조 이미지 (ground truth)
+DISTORTED_IMAGE_PATH = r"E:\MRVNet2D\dataset\KADID10K\images\I20_02_05.png"   # 입력 왜곡 이미지
+REFERENCE_IMAGE_PATH = r"E:\MRVNet2D\dataset\KADID10K\images\I20.png"        # 참조 이미지 (ground truth)
 MODEL_PATH = r"E:\MRVNet2D\checkpoints\volterra_swinir_hybrid\mrvnet_epoch27.pth"
 
 # ✅ 전처리

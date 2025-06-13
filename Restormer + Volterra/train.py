@@ -98,11 +98,11 @@ from csiq_dataset import CSIQDataset
 
 # ✅ 학습 설정
 BATCH_SIZE = 2
-EPOCHS = 100
+EPOCHS = 60
 LR = 2e-4
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# ✅ 데이터셋 경로
+# ✅ 경로 설정
 KADID_CSV = 'E:/MRVNet2D/dataset/KADID10K/kadid10k.csv'
 TID_CSV = 'E:/MRVNet2D/dataset/tid2013/mos.csv'
 TID_DISTORTED_DIR = 'E:/MRVNet2D/dataset/tid2013/distorted_images'
@@ -110,15 +110,14 @@ TID_REFERENCE_DIR = 'E:/MRVNet2D/dataset/tid2013/reference_images'
 CSIQ_CSV = 'E:/MRVNet2D/dataset/CSIQ/CSIQ.txt'
 CSIQ_ROOT = 'E:/MRVNet2D/dataset/CSIQ'
 
-# ✅ 체크포인트 저장 경로
-SAVE_DIR = 'checkpoints/restormer_volterra_all'
+SAVE_DIR = 'checkpoints/restormer_volterra_all_60'
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # ✅ Progressive Learning 스케줄
 resize_schedule = {
     0: 128,
     30: 192,
-    60: 256
+    60: 256  # 학습은 60까지
 }
 
 def get_transform(epoch):
@@ -132,7 +131,6 @@ def get_transform(epoch):
     ])
 
 def main():
-    # ✅ 모델, 손실, 최적화
     model = RestormerVolterra().to(DEVICE)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=LR)
@@ -141,14 +139,20 @@ def main():
     for epoch in range(EPOCHS):
         transform = get_transform(epoch)
 
-        # ✅ 각 데이터셋 불러오기
+        # ✅ 데이터셋 로드
         kadid_dataset = KADID10KDataset(csv_file=KADID_CSV, transform=transform)
-        tid_dataset = TID2013Dataset(csv_file=TID_CSV, distorted_dir=TID_DISTORTED_DIR, reference_dir=TID_REFERENCE_DIR, transform=transform)
-        csiq_dataset = CSIQDataset(csv_file=CSIQ_CSV, root_dir=CSIQ_ROOT, transform=transform)
+        tid_dataset = TID2013Dataset(csv_file=TID_CSV,
+                                      distorted_dir=TID_DISTORTED_DIR,
+                                      reference_dir=TID_REFERENCE_DIR,
+                                      transform=transform)
+        csiq_dataset = CSIQDataset(csv_file=CSIQ_CSV,
+                                    root_dir=CSIQ_ROOT,
+                                    transform=transform)
 
-        # ✅ 통합 데이터셋
+        # ✅ 데이터셋 통합
         train_dataset = ConcatDataset([kadid_dataset, tid_dataset, csiq_dataset])
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE,
+                                  shuffle=True, num_workers=4, pin_memory=True)
 
         print(f"[Epoch {epoch+1}] Input resolution: {transform.transforms[0].size}, Total samples: {len(train_dataset)}")
 
@@ -173,9 +177,8 @@ def main():
 
         print(f"Epoch [{epoch+1}/{EPOCHS}] Loss: {epoch_loss / len(train_loader):.6f}")
 
-        # ✅ 에포크별 모델 저장
+        # ✅ 모델 저장
         torch.save(model.state_dict(), os.path.join(SAVE_DIR, f"epoch_{epoch+1}.pth"))
 
 if __name__ == '__main__':
     main()
-

@@ -41,14 +41,7 @@ class MRVNetUNet(nn.Module):
 
 
 
-        # swin 사용x 버전
-        model = MRVNetUNet(
-            in_channels=3,
-            base_channels=32,
-            rank=4,
-            use_lossless=True,
-            use_swin_middle=False  # ✅ Swin 제거
-        ).to()
+
 
         # Decoder
         self.up3 = nn.ConvTranspose2d(base_channels * 8, base_channels * 4, kernel_size=2, stride=2)

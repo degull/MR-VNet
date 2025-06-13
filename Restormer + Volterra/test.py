@@ -132,7 +132,7 @@ from tqdm import tqdm
 
 # ✅ 설정
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-CHECKPOINT_PATH = r"E:\MRVNet2D\checkpoints\restormer_volterra_all\epoch_58.pth"
+CHECKPOINT_PATH = r"E:\MRVNet2D\checkpoints\restormer_volterra_all\epoch_59.pth"
 TEST_CSV = 'E:/MRVNet2D/dataset/KADID10K/kadid10k.csv'
 IMAGE_ROOT = 'E:/MRVNet2D/dataset/KADID10K/images'
 
@@ -184,6 +184,6 @@ with torch.no_grad():
 print(f"\n✅ Average PSNR: {psnr_total / num_images:.2f} dB")
 print(f"✅ Average SSIM: {ssim_total / num_images:.4f}")
 
-# 59
-# ✅ Average PSNR: 27.90 dB
-# ✅ Average SSIM: 0.9022
+# 58
+#✅ Average PSNR: 28.35 dB
+#✅ Average SSIM: 0.9059
