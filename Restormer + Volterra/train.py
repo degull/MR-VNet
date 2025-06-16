@@ -98,7 +98,7 @@ from csiq_dataset import CSIQDataset
 
 # ✅ 학습 설정
 BATCH_SIZE = 2
-EPOCHS = 60
+EPOCHS = 100
 LR = 2e-4
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

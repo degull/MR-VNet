@@ -14,9 +14,9 @@ def main():
     USE_LOSSLESS = True
     USE_SWIN_MIDDLE = True
 
-    TEST_CSV = r"E:\MRVNet2D\KADID10K\kadid10k.csv"
-    IMAGE_ROOT = r"E:\MRVNet2D\KADID10K\images"
-    MODEL_PATH = r"E:\MRVNet2D\checkpoints\volterra_swinir_hybrid\mrvnet_epoch27.pth" # prns : 23.70dB / SSIM : 0.8387
+    TEST_CSV = r"E:\MRVNet2D\dataset\KADID10K\kadid10k.csv"
+    IMAGE_ROOT = r"E:\MRVNet2D\dataset\KADID10K\images"
+    MODEL_PATH = r"E:\MRVNet2D\checkpoints\volterra_swinir_hybrid\mrvnet_epoch100.pth" # prns : 23.70dB / SSIM : 0.8387
 
     transform = transforms.Compose([
         transforms.Resize((256, 256)),
