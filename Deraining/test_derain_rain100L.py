@@ -4,7 +4,6 @@ sys.path.append(r"E:/MRVNet2D/")
 import os
 import time
 import torch
-import torchvision.transforms.functional as TF
 from torch.utils.data import DataLoader
 from mr_vnet_model.mrvnet_unet import MRVNetUNet
 from mr_vnet_model.dataset_derain import RainDataset
@@ -31,7 +30,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     dataset_path = r'E:\MRVNet2D\dataset\rain100L'
-    model_path = r'./checkpoints/rain100L/epoch_100_ssim0.9400_psnr33.00.pth'  # 네가 저장한 모델 경로
+    model_path = r'E:\MRVNet2D\checkpoints\rain100L\epoch_100_ssim0.9749_psnr37.38.pth'
     save_dir = r'E:/MRVNet2D/results/Rain100L'
     os.makedirs(save_dir, exist_ok=True)
 
@@ -44,7 +43,7 @@ def main():
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
-    psnr_list, ssim_list = []
+    psnr_list, ssim_list = [], []
 
     total_iters = len(test_loader)
     overall_start_time = time.time()
@@ -87,14 +86,17 @@ def main():
     avg_psnr = sum(psnr_list) / len(psnr_list)
     avg_ssim = sum(ssim_list) / len(ssim_list)
 
-    # 개별 PSNR / SSIM 전부 출력
+    # 모든 Iter PSNR / SSIM 출력
     print("\n[INFO] All Iter PSNR / SSIM Results:")
     for i in range(total_iters):
         print(f"Iter {i+1}: PSNR = {psnr_list[i]:.2f} dB, SSIM = {ssim_list[i]:.4f}")
 
-    # 평균 출력
+    # 평균 결과 출력
     print(f"\n[Rain100L] Test Average PSNR: {avg_psnr:.2f} dB  Average SSIM: {avg_ssim:.4f}")
 
 
 if __name__ == "__main__":
     main()
+
+
+# [Rain100L] Test Average PSNR: 31.16 dB  Average SSIM: 0.9153

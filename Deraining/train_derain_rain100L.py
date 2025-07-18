@@ -94,7 +94,8 @@ def main():
         print(f"[Rain100L] Epoch [{epoch+1}/{num_epochs}]  Avg Loss: {avg_loss:.4f}  Elapsed: {elapsed_str}")
 
         model.eval()
-        psnr_list, ssim_list = []
+        psnr_list = []
+        ssim_list = []
 
         with torch.no_grad():
             for rain, norain in train_loader:
@@ -122,7 +123,6 @@ def main():
         filename = f"epoch_{epoch+1}_ssim{avg_ssim:.4f}_psnr{avg_psnr:.2f}.pth"
         torch.save(model.state_dict(), os.path.join(save_dir, filename))
 
-
     print("\n[INFO] All Epoch PSNR / SSIM Results:")
     for i in range(num_epochs):
         print(f"Epoch {i+1}: PSNR = {psnr_per_epoch[i]:.2f} dB, SSIM = {ssim_per_epoch[i]:.4f}")
@@ -130,3 +130,107 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
+[INFO] All Epoch PSNR / SSIM Results:
+Epoch 1: PSNR = 12.85 dB, SSIM = 0.1574
+Epoch 2: PSNR = 16.66 dB, SSIM = 0.3807
+Epoch 3: PSNR = 20.20 dB, SSIM = 0.5820
+Epoch 4: PSNR = 21.88 dB, SSIM = 0.6731
+Epoch 5: PSNR = 23.22 dB, SSIM = 0.7198
+Epoch 6: PSNR = 24.04 dB, SSIM = 0.7496
+Epoch 7: PSNR = 24.75 dB, SSIM = 0.7723
+Epoch 8: PSNR = 24.80 dB, SSIM = 0.7845
+Epoch 9: PSNR = 25.59 dB, SSIM = 0.7989
+Epoch 10: PSNR = 25.65 dB, SSIM = 0.8060
+Epoch 11: PSNR = 25.82 dB, SSIM = 0.8140
+Epoch 12: PSNR = 25.84 dB, SSIM = 0.8187
+Epoch 13: PSNR = 26.04 dB, SSIM = 0.8251
+Epoch 14: PSNR = 26.78 dB, SSIM = 0.8324
+Epoch 15: PSNR = 27.00 dB, SSIM = 0.8380
+Epoch 16: PSNR = 26.47 dB, SSIM = 0.8393
+Epoch 17: PSNR = 27.24 dB, SSIM = 0.8423
+Epoch 18: PSNR = 26.43 dB, SSIM = 0.8438
+Epoch 19: PSNR = 27.55 dB, SSIM = 0.8497
+Epoch 20: PSNR = 27.62 dB, SSIM = 0.8527
+Epoch 21: PSNR = 27.07 dB, SSIM = 0.8527
+Epoch 22: PSNR = 27.31 dB, SSIM = 0.8557
+Epoch 23: PSNR = 27.73 dB, SSIM = 0.8589
+Epoch 24: PSNR = 27.79 dB, SSIM = 0.8618
+Epoch 25: PSNR = 27.98 dB, SSIM = 0.8636
+Epoch 26: PSNR = 28.27 dB, SSIM = 0.8661
+Epoch 27: PSNR = 28.44 dB, SSIM = 0.8679
+Epoch 28: PSNR = 28.40 dB, SSIM = 0.8699
+Epoch 29: PSNR = 28.47 dB, SSIM = 0.8708
+Epoch 30: PSNR = 27.46 dB, SSIM = 0.8699
+Epoch 31: PSNR = 28.18 dB, SSIM = 0.8734
+Epoch 32: PSNR = 28.51 dB, SSIM = 0.8742
+Epoch 33: PSNR = 28.70 dB, SSIM = 0.8765
+Epoch 34: PSNR = 28.73 dB, SSIM = 0.8775
+Epoch 35: PSNR = 28.83 dB, SSIM = 0.8794
+Epoch 36: PSNR = 28.61 dB, SSIM = 0.8806
+Epoch 37: PSNR = 28.96 dB, SSIM = 0.8818
+Epoch 38: PSNR = 28.80 dB, SSIM = 0.8817
+Epoch 39: PSNR = 28.40 dB, SSIM = 0.8833
+Epoch 40: PSNR = 29.26 dB, SSIM = 0.8850
+Epoch 41: PSNR = 29.13 dB, SSIM = 0.8874
+Epoch 42: PSNR = 29.18 dB, SSIM = 0.8886
+Epoch 43: PSNR = 29.23 dB, SSIM = 0.8902
+Epoch 44: PSNR = 29.22 dB, SSIM = 0.8907
+Epoch 45: PSNR = 29.74 dB, SSIM = 0.8935
+Epoch 46: PSNR = 29.90 dB, SSIM = 0.8959
+Epoch 47: PSNR = 29.38 dB, SSIM = 0.8983
+Epoch 48: PSNR = 29.01 dB, SSIM = 0.8958
+Epoch 49: PSNR = 29.65 dB, SSIM = 0.9001
+Epoch 50: PSNR = 30.29 dB, SSIM = 0.9031
+Epoch 51: PSNR = 30.39 dB, SSIM = 0.9066
+Epoch 52: PSNR = 30.93 dB, SSIM = 0.9096
+Epoch 53: PSNR = 29.41 dB, SSIM = 0.9109
+Epoch 54: PSNR = 31.30 dB, SSIM = 0.9158
+Epoch 55: PSNR = 31.52 dB, SSIM = 0.9191
+Epoch 56: PSNR = 31.19 dB, SSIM = 0.9204
+Epoch 57: PSNR = 31.93 dB, SSIM = 0.9245
+Epoch 58: PSNR = 31.66 dB, SSIM = 0.9251
+Epoch 59: PSNR = 32.21 dB, SSIM = 0.9272
+Epoch 60: PSNR = 31.55 dB, SSIM = 0.9298
+Epoch 61: PSNR = 32.51 dB, SSIM = 0.9317
+Epoch 62: PSNR = 32.27 dB, SSIM = 0.9367
+Epoch 63: PSNR = 32.83 dB, SSIM = 0.9378
+Epoch 64: PSNR = 33.07 dB, SSIM = 0.9401
+Epoch 65: PSNR = 33.26 dB, SSIM = 0.9418
+Epoch 66: PSNR = 33.70 dB, SSIM = 0.9451
+Epoch 67: PSNR = 32.52 dB, SSIM = 0.9444
+Epoch 68: PSNR = 33.33 dB, SSIM = 0.9462
+Epoch 69: PSNR = 33.83 dB, SSIM = 0.9486
+Epoch 70: PSNR = 33.89 dB, SSIM = 0.9503
+Epoch 71: PSNR = 33.66 dB, SSIM = 0.9497
+Epoch 72: PSNR = 33.68 dB, SSIM = 0.9507
+Epoch 73: PSNR = 33.57 dB, SSIM = 0.9535
+Epoch 74: PSNR = 34.20 dB, SSIM = 0.9528
+Epoch 75: PSNR = 33.80 dB, SSIM = 0.9542
+Epoch 76: PSNR = 34.55 dB, SSIM = 0.9557
+Epoch 77: PSNR = 34.25 dB, SSIM = 0.9579
+Epoch 78: PSNR = 34.82 dB, SSIM = 0.9585
+Epoch 79: PSNR = 35.42 dB, SSIM = 0.9617
+Epoch 80: PSNR = 34.27 dB, SSIM = 0.9609
+Epoch 81: PSNR = 35.34 dB, SSIM = 0.9625
+Epoch 82: PSNR = 35.41 dB, SSIM = 0.9631
+Epoch 83: PSNR = 35.18 dB, SSIM = 0.9636
+Epoch 84: PSNR = 35.52 dB, SSIM = 0.9649
+Epoch 85: PSNR = 35.38 dB, SSIM = 0.9639
+Epoch 86: PSNR = 35.72 dB, SSIM = 0.9653
+Epoch 87: PSNR = 35.70 dB, SSIM = 0.9678
+Epoch 88: PSNR = 35.58 dB, SSIM = 0.9645
+Epoch 89: PSNR = 36.23 dB, SSIM = 0.9684
+Epoch 90: PSNR = 35.37 dB, SSIM = 0.9683
+Epoch 91: PSNR = 35.58 dB, SSIM = 0.9692
+Epoch 92: PSNR = 35.97 dB, SSIM = 0.9700
+Epoch 93: PSNR = 35.69 dB, SSIM = 0.9717
+Epoch 94: PSNR = 35.88 dB, SSIM = 0.9719
+Epoch 95: PSNR = 35.98 dB, SSIM = 0.9720
+Epoch 96: PSNR = 36.20 dB, SSIM = 0.9705
+Epoch 97: PSNR = 35.93 dB, SSIM = 0.9710
+Epoch 98: PSNR = 36.58 dB, SSIM = 0.9715
+Epoch 99: PSNR = 36.07 dB, SSIM = 0.9726
+Epoch 100: PSNR = 37.38 dB, SSIM = 0.9749
+"""
