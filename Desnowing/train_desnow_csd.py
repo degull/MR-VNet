@@ -6,9 +6,10 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
+from PIL import Image
+import torchvision.transforms as T
 from mr_vnet_model.mrvnet_unet import MRVNetUNet
-from mr_vnet_model.dataset_motionblur import GoProDataset
 import numpy as np
 from skimage.metrics import peak_signal_noise_ratio as compare_psnr
 from skimage.metrics import structural_similarity as compare_ssim
@@ -22,19 +23,38 @@ def tensor_to_numpy(img_tensor):
     return img
 
 
+class CSDDataset(Dataset):
+    def __init__(self, root_dir, mode='train'):
+        self.input_dir = os.path.join(root_dir, mode.capitalize(), 'Snow')
+        self.gt_dir = os.path.join(root_dir, mode.capitalize(), 'Gt')
+        self.input_list = sorted(os.listdir(self.input_dir))
+        self.gt_list = sorted(os.listdir(self.gt_dir))
+        self.transform = T.ToTensor()
+
+    def __len__(self):
+        return len(self.input_list)
+
+    def __getitem__(self, idx):
+        input_path = os.path.join(self.input_dir, self.input_list[idx])
+        gt_path = os.path.join(self.gt_dir, self.gt_list[idx])
+        input_img = Image.open(input_path).convert('RGB')
+        gt_img = Image.open(gt_path).convert('RGB')
+        input_img = self.transform(input_img)
+        gt_img = self.transform(gt_img)
+        return input_img, gt_img
+
+
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    dataset_path = r'E:\MRVNet2D\dataset\GOPRO'
-    csv_file = 'gopro_train_pairs.csv'
-    save_dir = r'./checkpoints/gopro'
+    dataset_path = r'E:\MRVNet2D\dataset\CSD'
+    save_dir = r'./checkpoints/csd'
     os.makedirs(save_dir, exist_ok=True)
 
-    train_dataset = GoProDataset(dataset_path, csv_file)
+    train_dataset = CSDDataset(dataset_path, mode='train')
     print(f"[INFO] Found {len(train_dataset)} training samples")
 
-    # OOM 방지
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=0)
 
     model = MRVNetUNet().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -54,12 +74,12 @@ def main():
         total_loss = 0
         start_time = time.time()
 
-        for idx, (blur, sharp) in enumerate(train_loader):
+        for idx, (snow, gt) in enumerate(train_loader):
             iter_start_time = time.time()
 
-            blur, sharp = blur.to(device), sharp.to(device)
-            restored = model(blur)
-            loss = criterion(restored, sharp)
+            snow, gt = snow.to(device), gt.to(device)
+            restored = model(snow)
+            loss = criterion(restored, gt)
 
             optimizer.zero_grad()
             loss.backward()
@@ -67,8 +87,8 @@ def main():
 
             total_loss += loss.item()
 
-            blur_np = tensor_to_numpy(blur[0])
-            gt_np = tensor_to_numpy(sharp[0])
+            snow_np = tensor_to_numpy(snow[0])
+            gt_np = tensor_to_numpy(gt[0])
             out_np = tensor_to_numpy(restored[0])
 
             psnr = compare_psnr(gt_np, out_np, data_range=255)
@@ -93,18 +113,18 @@ def main():
         elapsed_time = time.time() - start_time
         elapsed_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        print(f"[GOPRO] Epoch [{epoch+1}/{num_epochs}]  Avg Loss: {avg_loss:.4f}  Elapsed: {elapsed_str}")
+        print(f"[CSD] Epoch [{epoch+1}/{num_epochs}]  Avg Loss: {avg_loss:.4f}  Elapsed: {elapsed_str}")
 
         model.eval()
         psnr_list, ssim_list = [], []
 
         with torch.no_grad():
-            for blur, sharp in train_loader:
-                blur, sharp = blur.to(device), sharp.to(device)
-                restored = model(blur)
+            for snow, gt in train_loader:
+                snow, gt = snow.to(device), gt.to(device)
+                restored = model(snow)
 
-                for i in range(blur.shape[0]):
-                    gt_np = tensor_to_numpy(sharp[i])
+                for i in range(snow.shape[0]):
+                    gt_np = tensor_to_numpy(gt[i])
                     out_np = tensor_to_numpy(restored[i])
 
                     psnr = compare_psnr(gt_np, out_np, data_range=255)
@@ -131,5 +151,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# [Epoch 45] Average PSNR: 29.07 dB  Average SSIM: 0.8660
