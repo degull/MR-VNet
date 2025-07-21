@@ -29,7 +29,10 @@ class CSDDataset(Dataset):
         self.gt_dir = os.path.join(root_dir, mode.capitalize(), 'Gt')
         self.input_list = sorted(os.listdir(self.input_dir))
         self.gt_list = sorted(os.listdir(self.gt_dir))
-        self.transform = T.ToTensor()
+        self.transform = T.Compose([
+            T.RandomCrop((256, 256)),
+            T.ToTensor()
+        ])
 
     def __len__(self):
         return len(self.input_list)
@@ -54,7 +57,7 @@ def main():
     train_dataset = CSDDataset(dataset_path, mode='train')
     print(f"[INFO] Found {len(train_dataset)} training samples")
 
-    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4)
 
     model = MRVNetUNet().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
