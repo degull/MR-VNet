@@ -28,7 +28,10 @@ class CSDDataset(Dataset):
         self.gt_dir = os.path.join(root_dir, mode.capitalize(), 'Gt')
         self.input_list = sorted(os.listdir(self.input_dir))
         self.gt_list = sorted(os.listdir(self.gt_dir))
-        self.transform = T.ToTensor()
+        self.transform = T.Compose([
+            T.Resize((256, 256)),
+            T.ToTensor()
+        ])
 
     def __len__(self):
         return len(self.input_list)
@@ -54,11 +57,12 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0)
 
     model = MRVNetUNet().to(device)
-    checkpoint_path = r'./checkpoints/csd/epoch_100_ssim0.8xxx_psnr2x.xx.pth'  # 학습 결과 파일 지정
+    checkpoint_path = r'E:\MRVNet2D\checkpoints\csd\epoch_46_ssim0.3910_psnr12.51.pth'
     model.load_state_dict(torch.load(checkpoint_path))
     model.eval()
 
-    psnr_list, ssim_list = []
+    psnr_list = []
+    ssim_list = []
 
     total_iters = len(test_loader)
     start_time = time.time()
@@ -99,6 +103,7 @@ def main():
     for i in range(len(psnr_list)):
         print(f"Iter {i+1}: PSNR = {psnr_list[i]:.2f} dB, SSIM = {ssim_list[i]:.4f}")
 
+    print(f"Final Average: PSNR = {sum(psnr_list) / len(psnr_list):.2f} dB, SSIM = {sum(ssim_list) / len(ssim_list):.4f}")
 
 if __name__ == "__main__":
     main()
