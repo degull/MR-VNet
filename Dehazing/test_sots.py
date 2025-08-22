@@ -1,4 +1,4 @@
-# E:/MRVNet2D/Dehazing/test_csd.py
+# E:/MRVNet2D/Dehazing/test_sots.py
 
 import sys
 sys.path.append(r"E:/MRVNet2D/")
@@ -7,7 +7,7 @@ import os
 import torch
 import torch.nn.functional as F
 import numpy as np
-from glob import glob
+import pandas as pd
 from PIL import Image
 from torchvision import transforms
 from skimage.metrics import peak_signal_noise_ratio as compute_psnr
@@ -17,12 +17,10 @@ from tqdm import tqdm
 
 
 # ---------------- Utils ----------------
-ALLOWED_EXT = (".png", ".jpg", ".jpeg", ".tif", ".tiff")
-
 def load_image(path):
     img = Image.open(path).convert("RGB")
     transform = transforms.ToTensor()
-    return transform(img).unsqueeze(0)  # 1xCxHxW
+    return transform(img).unsqueeze(0)
 
 
 def tensor_to_numpy(img_tensor):
@@ -46,29 +44,24 @@ def crop_to_size(x, size):
     return x[:, :, :h, :w]
 
 
-def evaluate_csd(model, device, input_dir, target_dir):
+def evaluate_sots_from_csv(model, device, csv_path, dataset_root, name):
+    df = pd.read_csv(csv_path)
     psnr_list, ssim_list = [], []
 
-    input_files = sorted(glob(os.path.join(input_dir, "*.*")))
-    input_files = [f for f in input_files if f.lower().endswith(ALLOWED_EXT)]
+    print(f"[INFO] {name}: Found {len(df)} pairs from CSV")
 
-    target_files = sorted(glob(os.path.join(target_dir, "*.*")))
-    target_files = [f for f in target_files if f.lower().endswith(ALLOWED_EXT)]
+    for _, row in tqdm(df.iterrows(), total=len(df)):
+        hazy_rel = row["cloud_image_path"]
+        clear_rel = row["clear_image_path"]
 
-    # GT 매핑 (stem 기준)
-    target_map = {os.path.splitext(os.path.basename(f))[0]: f for f in target_files}
+        hazy_path = os.path.join(dataset_root, hazy_rel)
+        clear_path = os.path.join(dataset_root, clear_rel)
 
-    matched_pairs = []
-    for inp_path in input_files:
-        stem = os.path.splitext(os.path.basename(inp_path))[0]
-        if stem in target_map:
-            matched_pairs.append((inp_path, target_map[stem]))
+        if not (os.path.exists(hazy_path) and os.path.exists(clear_path)):
+            continue
 
-    print(f"[INFO] CSD: Matched {len(matched_pairs)} input/GT pairs")
-
-    for inp_path, tgt_path in tqdm(matched_pairs):
-        inp = load_image(inp_path).to(device)
-        tgt = load_image(tgt_path).to(device)
+        inp = load_image(hazy_path).to(device)
+        tgt = load_image(clear_path).to(device)
 
         inp_pad, orig_size = pad_to_factor(inp, factor=16)
         with torch.no_grad():
@@ -92,18 +85,35 @@ def main():
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     CKPT_PATH = r"E:\MRVNet2D\checkpoints\sots_mrvnet\epoch_91_ssim0.9616_psnr32.95.pth"
 
-    INPUT_DIR = r"E:/MRVNet2D/dataset/CSD/Test/Snow"
-    TARGET_DIR = r"E:/MRVNet2D/dataset/CSD/Test/Gt"
+    DATASETS = {
+        "SOTS-indoor": {
+            "csv": r"E:/MRVNet2D/dataset/SOTS/metadata_indoor.csv",
+            "root": r"E:/MRVNet2D/dataset/SOTS"
+        },
+        "SOTS-outdoor": {
+            "csv": r"E:/MRVNet2D/dataset/SOTS/metadata_outdoor.csv",
+            "root": r"E:/MRVNet2D/dataset/SOTS"
+        },
+    }
 
+    # 모델 로드
     model = MRVNetUNet(in_channels=3).to(DEVICE)
     state_dict = torch.load(CKPT_PATH, map_location=DEVICE)
     model.load_state_dict(state_dict)
     model.eval()
     print(f"[INFO] Loaded checkpoint: {CKPT_PATH}")
 
-    print(f"\n[TEST] Evaluating CSD ...")
-    psnr, ssim = evaluate_csd(model, DEVICE, INPUT_DIR, TARGET_DIR)
-    print(f"[RESULT] CSD → PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
+    results = {}
+    for name, info in DATASETS.items():
+        print(f"\n[TEST] Evaluating {name} ...")
+        psnr, ssim = evaluate_sots_from_csv(model, DEVICE, info["csv"], info["root"], name)
+        results[name] = (psnr, ssim)
+        print(f"[RESULT] {name} → PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
+
+    # 요약 출력
+    print("\n========== Final Results ==========")
+    for name, (psnr, ssim) in results.items():
+        print(f"{name:12s} | PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
 
 
 if __name__ == "__main__":
