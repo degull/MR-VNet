@@ -1,4 +1,4 @@
-# E:/MRVNet2D/Dehazing/test_sots.py
+# E:/MRVNet2D/Dehazing/test_kadid.py
 
 import sys
 sys.path.append(r"E:/MRVNet2D/")
@@ -7,13 +7,13 @@ import os
 import torch
 import torch.nn.functional as F
 import numpy as np
-import pandas as pd
 from PIL import Image
 from torchvision import transforms
 from skimage.metrics import peak_signal_noise_ratio as compute_psnr
 from skimage.metrics import structural_similarity as compute_ssim
-from mr_vnet_model.mrvnet_unet import MRVNetUNet
 from tqdm import tqdm
+
+from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 
 # ---------------- Utils ----------------
@@ -44,24 +44,23 @@ def crop_to_size(x, size):
     return x[:, :, :h, :w]
 
 
-def evaluate_sots_from_csv(model, device, csv_path, dataset_root, name):
-    df = pd.read_csv(csv_path)
+def evaluate_from_pairs(model, device, pairs_txt, root_dir, name):
+    with open(pairs_txt, "r") as f:
+        lines = f.readlines()
+
     psnr_list, ssim_list = [], []
+    print(f"[INFO] {name}: Found {len(lines)} pairs")
 
-    print(f"[INFO] {name}: Found {len(df)} pairs from CSV")
+    for line in tqdm(lines):
+        inp_rel, tgt_rel = line.strip().split()
+        inp_path = os.path.join(root_dir, inp_rel)
+        tgt_path = os.path.join(root_dir, tgt_rel)
 
-    for _, row in tqdm(df.iterrows(), total=len(df)):
-        hazy_rel = row["cloud_image_path"]
-        clear_rel = row["clear_image_path"]
-
-        hazy_path = os.path.join(dataset_root, hazy_rel)
-        clear_path = os.path.join(dataset_root, clear_rel)
-
-        if not (os.path.exists(hazy_path) and os.path.exists(clear_path)):
+        if not (os.path.exists(inp_path) and os.path.exists(tgt_path)):
             continue
 
-        inp = load_image(hazy_path).to(device)
-        tgt = load_image(clear_path).to(device)
+        inp = load_image(inp_path).to(device)
+        tgt = load_image(tgt_path).to(device)
 
         inp_pad, orig_size = pad_to_factor(inp, factor=16)
         with torch.no_grad():
@@ -83,16 +82,20 @@ def evaluate_sots_from_csv(model, device, csv_path, dataset_root, name):
 # ---------------- Main ----------------
 def main():
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    CKPT_PATH = r"E:\MRVNet2D\checkpoints\sots_mrvnet\epoch_91_ssim0.9616_psnr32.95.pth"
+    CKPT_PATH = r"E:\MRVNet2D\checkpoints\sots_mrvnet\epoch_89_ssim0.9613_psnr31.80.pth"
 
     DATASETS = {
-        "SOTS-indoor": {
-            "csv": r"E:/MRVNet2D/dataset/SOTS/metadata_indoor.csv",
-            "root": r"E:/MRVNet2D/dataset/SOTS"
+        "KADID-gaussian": {
+            "root": r"E:/MRVNet2D/dataset/kadid_seperate/gaussian",
+            "pairs": r"E:/MRVNet2D/dataset/kadid_seperate/gaussian/pairs_gaussian.txt",
         },
-        "SOTS-outdoor": {
-            "csv": r"E:/MRVNet2D/dataset/SOTS/metadata_outdoor.csv",
-            "root": r"E:/MRVNet2D/dataset/SOTS"
+        "KADID-impulse": {
+            "root": r"E:/MRVNet2D/dataset/kadid_seperate/impulse noise",
+            "pairs": r"E:/MRVNet2D/dataset/kadid_seperate/impulse noise/pairs_impulse.txt",
+        },
+        "KADID-white": {
+            "root": r"E:/MRVNet2D/dataset/kadid_seperate/white noise",
+            "pairs": r"E:/MRVNet2D/dataset/kadid_seperate/white noise/pairs_white.txt",
         },
     }
 
@@ -106,14 +109,14 @@ def main():
     results = {}
     for name, info in DATASETS.items():
         print(f"\n[TEST] Evaluating {name} ...")
-        psnr, ssim = evaluate_sots_from_csv(model, DEVICE, info["csv"], info["root"], name)
+        psnr, ssim = evaluate_from_pairs(model, DEVICE, info["pairs"], info["root"], name)
         results[name] = (psnr, ssim)
         print(f"[RESULT] {name} → PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
 
     # 요약 출력
     print("\n========== Final Results ==========")
     for name, (psnr, ssim) in results.items():
-        print(f"{name:12s} | PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
+        print(f"{name:14s} | PSNR: {psnr:.2f} dB | SSIM: {ssim:.4f}")
 
 
 if __name__ == "__main__":
