@@ -1,4 +1,4 @@
-# E:/MRVNet2D/Dehazing/train_sots.py
+# E:/MRVNet2D/Dehazing/train_sots_joint.py
 import sys
 sys.path.append(r"E:/MRVNet2D/")
 
@@ -21,18 +21,19 @@ from mr_vnet_model.mrvnet_unet import MRVNetUNet
 
 # ---------------- Dataset ----------------
 class SOTSDataset(Dataset):
-    """ hazy_xxx ↔ clear_xxx (CSV 기반) """
-    def __init__(self, csv_path, root_dir, transform=None):
-        self.df = pd.read_csv(csv_path)
-        self.root_dir = root_dir
+    def __init__(self, csv_paths, root_dirs, transform=None):
+        """
+        csv_paths : [indoor_csv, outdoor_csv]
+        root_dirs : [indoor_root, outdoor_root]
+        """
         self.transform = transform
         self.pairs = []
 
-        for _, row in self.df.iterrows():
-            clear_path = os.path.join(root_dir, row["clear_image_path"])
-            hazy_list = eval(row["hazy_image_paths"])  # string → list
-            for hazy_rel in hazy_list:
-                hazy_path = os.path.join(root_dir, hazy_rel)
+        for csv_path, root_dir in zip(csv_paths, root_dirs):
+            df = pd.read_csv(csv_path)
+            for _, row in df.iterrows():
+                hazy_path = os.path.join(root_dir, row["cloud_image_path"])
+                clear_path = os.path.join(root_dir, row["clear_image_path"])
                 self.pairs.append((hazy_path, clear_path))
 
     def __len__(self): return len(self.pairs)
@@ -58,11 +59,14 @@ def tensor_to_numpy(img_tensor):
     return img
 
 
-# ---------------- Train ----------------
-def train_sots():
-    # Dataset / Save path
-    CSV_PATH = r"E:\MRVNet2D\dataset\SOTS\metadata_indoor.csv"
-    ROOT_DIR = r"E:\MRVNet2D\dataset\SOTS\indoor"
+# ---------------- Training ----------------
+def train_sots_joint():
+    # Dataset paths
+    indoor_csv = r"E:\MRVNet2D\dataset\SOTS\metadata_indoor.csv"
+    indoor_root = r"E:\MRVNet2D\dataset\SOTS"
+    outdoor_csv = r"E:\MRVNet2D\dataset\SOTS\metadata_outdoor.csv"
+    outdoor_root = r"E:\MRVNet2D\dataset\SOTS"
+
     SAVE_DIR = r"E:\MRVNet2D\checkpoints\sots_mrvnet"
     os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -77,9 +81,14 @@ def train_sots():
         transforms.ToTensor()
     ])
 
-    # Dataset & Loader
-    dataset = SOTSDataset(CSV_PATH, ROOT_DIR, transform)
+    # Dataset (Indoor + Outdoor 합침)
+    dataset = SOTSDataset(
+        csv_paths=[indoor_csv, outdoor_csv],
+        root_dirs=[indoor_root, outdoor_root],
+        transform=transform
+    )
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+    print(f"[INFO] Total training pairs (Indoor + Outdoor): {len(dataset)}")
 
     # Model / Optimizer / Loss
     model = MRVNetUNet(in_channels=3).to(DEVICE)
@@ -87,30 +96,27 @@ def train_sots():
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
     psnr_per_epoch, ssim_per_epoch = [], []
-
     overall_start_time = time.time()
 
     for epoch in range(1, NUM_EPOCHS + 1):
-        print(f"\n[INFO] Starting Epoch {epoch}/{NUM_EPOCHS}")
+        print(f"\n[INFO] Joint SOTS → Starting Epoch {epoch}/{NUM_EPOCHS}")
         model.train()
         total_loss = 0
         start_time = time.time()
 
-        for idx, (hazy, clear) in enumerate(dataloader):
+        for hazy, clear in dataloader:
             hazy, clear = hazy.to(DEVICE), clear.to(DEVICE)
-
             restored = model(hazy)
             loss = criterion(restored, clear)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
             total_loss += loss.item()
 
         avg_loss = total_loss / len(dataloader)
         elapsed = time.time() - start_time
-        print(f"[SOTS] Epoch [{epoch}/{NUM_EPOCHS}]  Avg Loss: {avg_loss:.4f}  Time: {elapsed:.1f}s")
+        print(f"[Joint SOTS] Epoch [{epoch}/{NUM_EPOCHS}]  Avg Loss: {avg_loss:.4f}  Time: {elapsed:.1f}s")
 
         # ---------- Evaluation ----------
         model.eval()
@@ -119,7 +125,6 @@ def train_sots():
             for hazy, clear in dataloader:
                 hazy, clear = hazy.to(DEVICE), clear.to(DEVICE)
                 restored = model(hazy)
-
                 for i in range(hazy.shape[0]):
                     gt_np = tensor_to_numpy(clear[i])
                     out_np = tensor_to_numpy(restored[i])
@@ -133,17 +138,16 @@ def train_sots():
         psnr_per_epoch.append(avg_psnr)
         ssim_per_epoch.append(avg_ssim)
 
-        print(f"[Epoch {epoch}] Avg PSNR: {avg_psnr:.2f} dB  Avg SSIM: {avg_ssim:.4f}")
+        print(f"[Joint SOTS] Epoch {epoch} → Avg PSNR: {avg_psnr:.2f} dB  Avg SSIM: {avg_ssim:.4f}")
 
         # ---------- Save Checkpoint ----------
         filename = f"epoch_{epoch}_ssim{avg_ssim:.4f}_psnr{avg_psnr:.2f}.pth"
         torch.save(model.state_dict(), os.path.join(SAVE_DIR, filename))
 
-    # ---------- Final Results ----------
-    print("\n[INFO] All Epoch PSNR / SSIM Results:")
+    print(f"\n[INFO] Joint SOTS Training Completed. All Epoch Results:")
     for i in range(NUM_EPOCHS):
         print(f"Epoch {i+1}: PSNR = {psnr_per_epoch[i]:.2f} dB, SSIM = {ssim_per_epoch[i]:.4f}")
 
 
 if __name__ == "__main__":
-    train_sots()
+    train_sots_joint()
