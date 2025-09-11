@@ -1,30 +1,22 @@
-# pipeline.py
-import random, numpy as np
-from distortions import *
+# E:\MRVNet2D\multiple_distortion\pipeline.py
+import random
+import numpy as np
+from multiple_distortion.utils_data import distort_images
 
-# Distortion groups
-DISTORTION_GROUPS = {
-    "rain": [add_rain],
-    "snow": [add_snow],
-    "blur": [gaussian_blur, motion_blur],
-    #"noise": [gaussian_noise, impulse_noise],
-}
 
-def apply_random_distortions(img, Ndist=3, return_info=False):
-    # 몇 개 distortion 적용할지 (1 ~ min(Ndist, 그룹 수))
-    ndist = random.randint(1, min(Ndist, len(DISTORTION_GROUPS)))
-    chosen_groups = random.sample(list(DISTORTION_GROUPS.keys()), ndist)
-    chosen = [random.choice(DISTORTION_GROUPS[g]) for g in chosen_groups]
-    random.shuffle(chosen)
+def apply_random_distortions(img, Ndist: int = 4, num_levels: int = 5, return_info: bool = False):
 
-    out = img.copy()
-    info = []
-    for fn in chosen:
-        # 강도: Gaussian 분포 샘플링 (1~5)
-        level = int(np.clip(np.random.normal(2.5, 1.0), 1, 5))
-        out = fn(out, level)
-        info.append(f"{fn.__name__}(L{level})")
+    # Tensor로 변환
+    import torchvision.transforms as T
+    if not isinstance(img, np.ndarray) and not hasattr(img, "shape"):  # PIL.Image 인 경우
+        img = T.ToTensor()(img)
+
+    # Distortion 적용
+    out, distort_functions, distort_values = distort_images(
+        img, max_distortions=Ndist, num_levels=num_levels
+    )
 
     if return_info:
+        info = [f"{fn.__name__}(val={val})" for fn, val in zip(distort_functions, distort_values)]
         return out, info
     return out
